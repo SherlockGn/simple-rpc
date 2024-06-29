@@ -2,7 +2,18 @@
     "name": "@neko/simple-rpc",
     "version": "1.0.0",
     "description": "An easy-to-use RPC tool that makes remote function calls as seamless as local ones, eliminating the need for RESTful APIs.",
-    "main": "index.mjs",
+    "main": "./dist/index-cjs.cjs",
+    "module": "./dist/index-esm.mjs",
+    "exports": {
+        ".": {
+            "import": "./dist/index-esm.mjs",
+            "require": "./dist/index-cjs.cjs"
+        },
+        "./client": {
+            "import": "./dist/client-esm.mjs",
+            "require": "./dist/client-cjs.cjs"
+        }
+    },
     "type": "module",
     "scripts": {
         "build": "rollup -c"

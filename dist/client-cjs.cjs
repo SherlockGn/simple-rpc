@@ -476,6 +476,6 @@ const clientHander = {
 
 const client = new Proxy({ settings, chain: [] }, clientHander);
 
-window.client = client;
+globalThis.client = client;
 
 module.exports = client;

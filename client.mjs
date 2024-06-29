@@ -128,4 +128,4 @@ const client = new Proxy({ settings, chain: [] }, clientHander)
 
 export default client
 
-window.client = client
+globalThis.client = client

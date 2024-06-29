@@ -480,7 +480,7 @@
 
     const client = new Proxy({ settings, chain: [] }, clientHander);
 
-    window.client = client;
+    globalThis.client = client;
 
     return client;
 
