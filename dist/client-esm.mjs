@@ -416,8 +416,7 @@ const settings = {
     host: '',
     extra: {},
     upload: null,
-    download: null,
-    url: 1
+    download: null
 };
 
 const factory = chain => {

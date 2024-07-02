@@ -869,7 +869,12 @@ const response = async (req, res, ctx) => {
 };
 
 const handler = async (req, res) => {
-    if (settings.plugin(req, res)) {
+
+    const ctx = {
+        state: {}
+    };
+
+    if (await settings.plugin(req, res, ctx)) {
         return
     }
 
@@ -891,10 +896,6 @@ const handler = async (req, res) => {
         res.end();
         return
     }
-
-    const ctx = {
-        state: {}
-    };
 
     try {
         await header(req, ctx, settings);
@@ -943,7 +944,7 @@ const settings = {
         headers: null,
         credential: false
     },
-    plugin: () => {},
+    plugin: async () => {},
     protocol: null,
     authHandler: null,
     endHandler: null,
@@ -996,7 +997,6 @@ const useCors = (options = '*') => {
         credential = true
     } = options;
     settings.cors.origins = origins;
-    settings.cors.origins = origins;
     settings.cors.methods = methods;
     settings.cors.headers = headers;
     settings.cors.credential = credential;
@@ -1018,8 +1018,9 @@ const createServer = options => {
     } else if (settings.protocol === 'https') {
         protocol = https;
     }
+    options.protocol = protocol;
 
-    const server = protocol.createServer(handler, options);
+    const server = protocol.createServer(options, handler);
 
     return {
         server,
