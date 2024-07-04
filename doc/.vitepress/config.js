@@ -3,6 +3,7 @@ import { defineConfig } from 'vitepress'
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
     outDir: '../docs',
+    base: '/simple-rpc/',
     title: 'Simple RPC',
     description: 'An easy-to-use RPC framework',
     themeConfig: {

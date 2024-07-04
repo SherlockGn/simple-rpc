@@ -1,0 +1,1 @@
+import{_ as s,c as i,o as a,a1 as n}from"./chunks/framework.Cr7mZrIm.js";const o=JSON.parse('{"title":"RPC","description":"","frontmatter":{},"headers":[],"relativePath":"rpc.md","filePath":"rpc.md"}'),h={name:"rpc.md"},t=n("",30),l=[t];function p(k,e,r,E,d,g){return a(),i("div",null,l)}const c=s(h,[["render",p]]);export{o as __pageData,c as default};
