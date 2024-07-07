@@ -1,10 +1,13 @@
+const external = ['fs', 'http', 'https', 'path', 'stream']
+
 export default [
     {
         input: 'index.mjs',
         output: [
             { file: 'dist/index-esm.mjs', format: 'esm' },
             { file: 'dist/index-cjs.cjs', format: 'cjs' }
-        ]
+        ],
+        external
     },
     {
         input: 'client.mjs',
@@ -16,6 +19,7 @@ export default [
                 format: 'umd',
                 name: 'simpleRpcClient'
             }
-        ]
+        ],
+        external
     }
 ]

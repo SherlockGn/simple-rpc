@@ -1,74 +1,82 @@
 import { serialize, serializeWithBlobs, deserialize } from './serialize.mjs'
+import { getClient } from './adapter.mjs'
 
 const invoke = async (module, method, params) => {
-    return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest()
-        xhr.open('POST', `${settings.host}/api/rpc`, true)
-        xhr.onprogress = event => {
-            if (
-                event.lengthComputable &&
-                typeof settings.download === 'function'
-            ) {
-                settings.download(event.loaded, event.total)
-            }
+    const client = getClient(settings.useFetch)
+    client.setProgress(settings.download, settings.upload)
+
+    const { json, blobs } = serializeWithBlobs({
+        module,
+        method,
+        params,
+        extra: settings.extra
+    })
+    const blobInfo = blobs.map(blob => {
+        return {
+            name: blob.name,
+            size: blob.size,
+            type: blob.type,
+            lastModified: blob.lastModified
         }
-        xhr.upload.addEventListener('progress', event => {
-            if (
-                event.lengthComputable &&
-                typeof settings.upload === 'function'
-            ) {
-                settings.upload(event.loaded, event.total)
-            }
-        })
-        const { json, blobs } = serializeWithBlobs({
+    })
+
+    let data
+    if (blobInfo.length === 0) {
+        client.setContentType('application/json')
+        data = json
+    } else {
+        client.setContentType('application/octet-stream')
+        const newJson = serialize({
             module,
             method,
             params,
-            extra: settings.extra
+            extra: settings.extra,
+            blobInfo
         })
-        const blobInfo = blobs.map(blob => {
-            return {
-                name: blob.name,
-                size: blob.size,
-                type: blob.type,
-                lastModified: blob.lastModified
-            }
-        })
-        if (blobInfo.length === 0) {
-            xhr.setRequestHeader('Content-Type', 'application/json')
-            xhr.send(json)
-        } else {
-            xhr.setRequestHeader('Content-Type', 'application/octet-stream')
-            const newJson = serialize({
-                module,
-                method,
-                params,
-                extra: settings.extra,
-                blobInfo
-            })
-            xhr.setRequestHeader(
-                'X-Simple-Rpc-Params',
-                encodeURIComponent(newJson)
-            )
-            xhr.send(new Blob([...blobs]))
+        client.setHeader('X-Simple-Rpc-Params', encodeURIComponent(newJson))
+        data = new Blob([...blobs])
+    }
+    try {
+        const responseText = await client.send(
+            `${settings.host}/api/rpc`,
+            'POST',
+            data
+        )
+        if (responseText) {
+            return deserialize(responseText)
         }
-        xhr.onload = () => {
-            if (xhr.status === 204) {
-                resolve()
-            } else if (xhr.status === 200) {
-                resolve(deserialize(xhr.responseText))
-            } else {
-                reject(deserialize(xhr.responseText))
-            }
-        }
-    })
+    } catch (e) {
+        throw deserialize(e)
+    }
 }
 
-const settings = {
+export const settings = {
     host: '',
     extra: {},
     upload: null,
+    useFetch: false,
     download: null
+}
+
+export const file = async (path) => {
+    if (typeof window !== 'undefined') {
+        throw Error('Not supported in browser')
+    }
+    let fsps = null
+    if (typeof require !== 'undefined') {
+        fsps = require('fs').promises
+    } else {
+        fsps = (await import('fs')).promises
+    }
+
+    const buffer = await fsps.readFile(path)
+    const stat = await fsps.stat(path)
+    const name = path.split('/').pop()
+    const lastModified = stat.mtime.getTime()
+
+    return new File([buffer], name, {
+        lastModified
+    })
 }
 
 const factory = chain => {
@@ -126,5 +134,3 @@ const clientHander = {
 const client = new Proxy({ settings, chain: [] }, clientHander)
 
 export default client
-
-globalThis.client = client

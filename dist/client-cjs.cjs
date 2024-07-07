@@ -1,5 +1,7 @@
 'use strict';
 
+Object.defineProperty(exports, '__esModule', { value: true });
+
 const basic = [
     {
         type: 'string',
@@ -350,75 +352,303 @@ const deserialize = str => {
     return revert(JSON.parse(str))
 };
 
-const invoke = async (module, method, params) => {
-    return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', `${settings.host}/api/rpc`, true);
-        xhr.onprogress = event => {
-            if (
-                event.lengthComputable &&
-                typeof settings.download === 'function'
-            ) {
-                settings.download(event.loaded, event.total);
-            }
-        };
-        xhr.upload.addEventListener('progress', event => {
-            if (
-                event.lengthComputable &&
-                typeof settings.upload === 'function'
-            ) {
-                settings.upload(event.loaded, event.total);
-            }
+class XHRClient {
+    constructor() {
+        this.xhr = new XMLHttpRequest();
+        this.headers = {};
+    }
+
+    async setContentType(contentType) {
+        this.headers['Content-Type'] = contentType;
+    }
+
+    async setHeader(name, val) {
+        this.headers[name] = val;
+    }
+
+    async setProgress(download, upload) {
+        if (typeof download === 'function') {
+            this.xhr.onprogress = event => {
+                if (event.lengthComputable) {
+                    download(event.loaded, event.total);
+                }
+            };
+        }
+        if (typeof upload === 'function') {
+            this.xhr.upload.addEventListener('progress', event => {
+                if (event.lengthComputable) {
+                    upload(event.loaded, event.total);
+                }
+            });
+        }
+    }
+
+    async send(url, method, body) {
+        this.xhr.open(method, url, true);
+
+        for (const name in this.headers) {
+            this.xhr.setRequestHeader(name, this.headers[name]);
+        }
+
+        this.xhr.send(body);
+
+        return new Promise((resolve, reject) => {
+            this.xhr.onload = () => {
+                if (this.xhr.status === 204) {
+                    resolve();
+                } else if (this.xhr.status === 200) {
+                    resolve(this.xhr.responseText);
+                } else {
+                    reject(this.xhr.responseText);
+                }
+            };
+        })
+    }
+}
+
+class FetchClient {
+    constructor() {
+        this.headers = {};
+    }
+
+    async setContentType(contentType) {
+        this.headers['Content-Type'] = contentType;
+    }
+
+    async setHeader(name, val) {
+        this.headers[name] = val;
+    }
+
+    async setProgress(download, upload) {
+        if (typeof download === 'function') {
+            this.download = download;
+        }
+    }
+
+    async send(url, method, body) {
+        const response = await fetch(url, {
+            method,
+            body,
+            headers: this.headers
         });
-        const { json, blobs } = serializeWithBlobs({
+
+        if (response.status === 204) {
+            return
+        }
+
+        const reader = response.body.getReader();
+        const total = parseInt(response.headers.get('Content-Length'));
+        let loaded = 0;
+        let responseText = '';
+        const textDecoder = new TextDecoder('utf-8');
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break
+            loaded += value.length;
+            if (this.download) {
+                this.download(loaded, total);
+            }
+
+            responseText += textDecoder.decode(value);
+        }
+
+        if (response.status === 200) {
+            return responseText
+        }
+        throw responseText
+    }
+}
+
+class HttpRequestClient {
+    constructor() {
+        this.headers = {};
+    }
+
+    async setContentType(contentType) {
+        this.headers['Content-Type'] = contentType;
+    }
+
+    async setHeader(name, val) {
+        this.headers[name] = val;
+    }
+
+    async setProgress(download, upload) {
+        if (typeof download === 'function') {
+            this.download = download;
+        }
+
+        if (typeof upload === 'function') {
+            this.upload = upload;
+        }
+    }
+
+    async send(url, method, body) {
+        let resolve, reject;
+        const ps = new Promise((res, rej) => {
+            resolve = res;
+            reject = rej;
+        });
+
+        let protocol = null;
+        if (url.startsWith('https:')) {
+            protocol = 'https';
+        } else if (url.startsWith('http:')) {
+            protocol = 'http';
+        } else {
+            throw Error('Unsupported protocol')
+        }
+        let request;
+        if (typeof require === 'function') {
+            request = require('request').request;
+        } else {
+            request = (await import(protocol)).request;
+        }
+
+        const urlObject = new URL(url);
+        this.headers['Content-Length'] =
+            body instanceof Blob ? body.size : Buffer.byteLength(body);
+
+        const options = {
+            path: urlObject.pathname + urlObject.search,
+            method,
+            hostname: urlObject.hostname,
+            port: urlObject.port,
+            headers: this.headers
+        };
+
+        const req = request(options, res => {
+            let responseData = '';
+            let receivedBytes = 0;
+            const contentLength = parseInt(res.headers['content-length'], 10);
+
+            if (res.statusCode === 204) {
+                resolve();
+                return
+            }
+
+            res.on('data', chunk => {
+                receivedBytes += chunk.length;
+                if (this.download) {
+                    this.download(receivedBytes, contentLength);
+                }
+                responseData += chunk;
+            });
+
+            res.on('end', () => {
+                if (res.statusCode === 200) {
+                    resolve(responseData);
+                } else {
+                    reject(responseData);
+                }
+            });
+        });
+
+        if (body instanceof Blob) {
+            body.arrayBuffer().then(buffer => {
+                req.write(Buffer.from(buffer));
+                req.end();
+            });
+        } else {
+            req.write(body, () => {
+                req.end();
+            });
+        }
+
+        return ps
+    }
+}
+
+const getClient = useFetch => {
+    let client;
+    if (useFetch) {
+        client = new FetchClient();
+    } else {
+        if (typeof XMLHttpRequest !== 'undefined') {
+            client = new XHRClient();
+        } else {
+            client = new HttpRequestClient();
+        }
+    }
+    return client
+};
+
+const invoke = async (module, method, params) => {
+    const client = getClient(settings.useFetch);
+    client.setProgress(settings.download, settings.upload);
+
+    const { json, blobs } = serializeWithBlobs({
+        module,
+        method,
+        params,
+        extra: settings.extra
+    });
+    const blobInfo = blobs.map(blob => {
+        return {
+            name: blob.name,
+            size: blob.size,
+            type: blob.type,
+            lastModified: blob.lastModified
+        }
+    });
+
+    let data;
+    if (blobInfo.length === 0) {
+        client.setContentType('application/json');
+        data = json;
+    } else {
+        client.setContentType('application/octet-stream');
+        const newJson = serialize({
             module,
             method,
             params,
-            extra: settings.extra
+            extra: settings.extra,
+            blobInfo
         });
-        const blobInfo = blobs.map(blob => {
-            return {
-                name: blob.name,
-                size: blob.size,
-                type: blob.type,
-                lastModified: blob.lastModified
-            }
-        });
-        if (blobInfo.length === 0) {
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.send(json);
-        } else {
-            xhr.setRequestHeader('Content-Type', 'application/octet-stream');
-            const newJson = serialize({
-                module,
-                method,
-                params,
-                extra: settings.extra,
-                blobInfo
-            });
-            xhr.setRequestHeader(
-                'X-Simple-Rpc-Params',
-                encodeURIComponent(newJson)
-            );
-            xhr.send(new Blob([...blobs]));
+        client.setHeader('X-Simple-Rpc-Params', encodeURIComponent(newJson));
+        data = new Blob([...blobs]);
+    }
+    try {
+        const responseText = await client.send(
+            `${settings.host}/api/rpc`,
+            'POST',
+            data
+        );
+        if (responseText) {
+            return deserialize(responseText)
         }
-        xhr.onload = () => {
-            if (xhr.status === 204) {
-                resolve();
-            } else if (xhr.status === 200) {
-                resolve(deserialize(xhr.responseText));
-            } else {
-                reject(deserialize(xhr.responseText));
-            }
-        };
-    })
+    } catch (e) {
+        throw deserialize(e)
+    }
 };
 
 const settings = {
     host: '',
     extra: {},
     upload: null,
+    useFetch: false,
     download: null
+};
+
+const file = async (path) => {
+    if (typeof window !== 'undefined') {
+        throw Error('Not supported in browser')
+    }
+    let fsps = null;
+    if (typeof require !== 'undefined') {
+        fsps = require('fs').promises;
+    } else {
+        fsps = (await import('fs')).promises;
+    }
+
+    const buffer = await fsps.readFile(path);
+    const stat = await fsps.stat(path);
+    const name = path.split('/').pop();
+    const lastModified = stat.mtime.getTime();
+
+    return new File([buffer], name, {
+        lastModified
+    })
 };
 
 const factory = chain => {
@@ -475,6 +705,6 @@ const clientHander = {
 
 const client = new Proxy({ settings, chain: [] }, clientHander);
 
-globalThis.client = client;
-
-module.exports = client;
+exports.default = client;
+exports.file = file;
+exports.settings = settings;
