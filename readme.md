@@ -10,13 +10,13 @@
       ><img
         src="https://img.shields.io/bundlephobia/min/%40neko-gong%2Fsimple-rpc?maxAge=3600
     "
-        alt="License"
+        alt="Size"
     /></a>
     <a href="https://www.npmjs.com/package/@neko-gong/simple-rpc"
       ><img
         src="https://img.shields.io/npm/unpacked-size/%40neko-gong%2Fsimple-rpc?maxAge=3600
     "
-        alt="NPM downloads"
+        alt="Unpacked Size"
     /></a>
     <a href="https://github.com/SherlockGn/simple-rpc/blob/main/LICENSE"
       ><img
