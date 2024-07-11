@@ -1,6 +1,6 @@
 {
     "name": "@neko-gong/simple-rpc",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "An easy-to-use RPC tool that makes remote function calls as seamless as local ones, eliminating the need for RESTful APIs.",
     "main": "./dist/index-cjs.cjs",
     "files": [
