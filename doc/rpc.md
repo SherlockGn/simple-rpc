@@ -1,8 +1,40 @@
 # RPC
 
-## Functions
+The RPC allows you to call remote functions just like call the local ones. Navigate to [Quick Start](./quick-start) to get some examples.
 
-The RPC modules are located in the `folder` specified in `server.useRpc`. Modules are imported dynamically.
+Here, I'd like to show you some information not mentioned before.
+
+## Sub-modules
+
+You can create sub-modules in your server side. For example, project file structure
+```
+project/
+  ├── rpc/
+  │   └── users/
+  │       └── profile.js
+  └── server.js
+```
+
+Use client by linking all folder names to call the function `getById` in `profile.js`:
+
+```javascript
+const profile = await client.users.profile.getById(3)
+```
+
+## Naming restriction
+
+The module name (including sub-names) must be combined by alphabets or numbers. Otherwise, you will get an error of `invalid request`.
+
+The framework tries to import the module dynamically from the specified file name with extension `.mjs`, `.cjs` and `.js`. If the module is not found, you will get an error of `module not found`.
+
+You can only call the methods which is exported by the module and is owned properties of the object. Otherwise, you will get an error of `method not found`.
+
+::: tip
+If you use invalid module names or invalid method names, the middleware `useAuth` will not be triggered.
+:::
+
+
+## Function parameters and returned values
 
 The following types of function parameters or return value are supported:
 
@@ -23,7 +55,6 @@ Besides, the object with circle reference is also supported. Here is an example.
 For server:
 
 ```javascript
-// in file user.js
 export const getTest = () => {
     const user = {
         id: 1,
@@ -47,7 +78,9 @@ console.log(user === user.self) // true
 console.log(user.map.get(user) === user.friends) // true
 ```
 
-If you throw an error from the server side, the client will caught the error as well.
+## Error Handling
+
+If you throw an error from the server side, the client will throw the same error as well.
 
 For server:
 
@@ -65,70 +98,5 @@ try {
 } catch (error) {
     console.log(error instanceof ReferenceError) // true
     console.log(error.message) // test error
-}
-```
-
-## Upload and Download Files
-
-You can use `FileRsp` to return a file.
-
-For server:
-
-```javascript
-// file.js
-import { FileRsp } from '@neko/simple-rpc'
-
-export const getImage = () => {
-    return FileRsp('path-to-the-image')
-    // Or you can use Buffer
-    // const buffer = fs.readFileSync(path)
-    // return FileRsp(buffer)
-}
-```
-
-For client:
-
-If you're using browser, simply use `client.url` to generate the image URL.
-
-```html
-<img src="" id="myimg" />
-```
-
-```javascript
-const img = document.getElementById('myimg')
-img.src = client.url.file.getImage()
-```
-
-To upload files, use `File` or `Blob` as function parameters.
-
-For client:
-
-```html
-<input type="file" name="file" multiple="multiple">
-```
-
-```javascript
-const fileinput = document.querySelector('input[name="file"]')
-fileinput.onchange = async event => {
-    const fileList = event.target.files
-    await client.file.upload(fileList, new Blob([1, 2, 3, 4, 5, 6]))
-}
-```
-
-For server:
-
-Each blob object will be converted to an object with properties `name`, `size` and `stream`. Use `stream` to write the data to the disk.
-
-```javascript
-// file.js
-export const upload = (fileList, blob) => {
-    const uploadFolder = join(dirname, 'upload')
-    for (let i = 0; i < fileList.length; i++) {
-        const item = fileList[i]
-        item.stream.pipe(fs.createWriteStream(join(uploadFolder, item.name)))
-    }
-    blob.pipe(
-        fs.createWriteStream(join(uploadFolder, 'blob.txt'))
-    )
 }
 ```

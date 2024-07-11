@@ -834,42 +834,48 @@ const response = async (req, res, ctx) => {
         return
     }
 
-    if (ctx.entry) {
-        if (ctx.result === undefined) {
-            res.statusCode = 204;
-            res.end();
+    try {
+        if (ctx.entry) {
+            if (ctx.result === undefined) {
+                res.statusCode = 204;
+                res.end();
+
+                return
+            }
+
+            if (ctx.result instanceof FileRsp) {
+                const s = await ctx.result.toStream(req.headers.range);
+                ctx.stream = s.stream;
+                ctx.header = s.header;
+            } else {
+                res.statusCode = ctx.result === undefined ? 204 : 200;
+                res.end(serialize(ctx.result));
+
+                return
+            }
+        }
+
+        if (ctx.header) {
+            for (const k in ctx.header) {
+                res.setHeader(k, ctx.header[k]);
+            }
+        }
+
+        if (ctx.stream) {
+            res.statusCode = 206;
+            ctx.stream.pipe(res);
 
             return
         }
-
-        if (ctx.result instanceof FileRsp) {
-            const s = await ctx.result.toStream(req.headers.range);
-            ctx.stream = s.stream;
-            ctx.header = s.header;
-        } else {
-            res.statusCode = ctx.result === undefined ? 204 : 200;
-            res.end(serialize(ctx.result));
-
-            return
-        }
-    }
-
-    if (ctx.header) {
-        for (const k in ctx.header) {
-            res.setHeader(k, ctx.header[k]);
-        }
-    }
-
-    if (ctx.stream) {
-        res.statusCode = 206;
-        ctx.stream.pipe(res);
+    } catch (error) {
+        res.statusCode = 500;
+        res.end(serialize(error));
 
         return
     }
 };
 
 const handler = async (req, res) => {
-
     const ctx = {
         state: {}
     };
@@ -1043,4 +1049,4 @@ const createServer = options => {
     }
 };
 
-export { FileRsp, createServer };
+export { FileRsp, createServer, deserialize, serialize };

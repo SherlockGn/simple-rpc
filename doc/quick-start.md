@@ -20,7 +20,7 @@ The file structure should be like this:
 project/
   ├── rpc/
   │   ├── user.js
-  │   └── post.js
+  │   └── file.js
   └── server.js
 ```
 
@@ -31,12 +31,10 @@ In the file `server.js`, you can use the following code to create a server:
 ```javascript [ESM]
 import { createServer } from '@neko/simple-rpc'
 
-;(async () => {
-    const server = createServer()
-    server.useRpc('./rpc')
+const server = createServer()
+server.useRpc('./rpc')
 
-    await server.start()
-})()
+await server.start()
 ```
 
 ```javascript [CJS]
@@ -84,14 +82,16 @@ module.exports = { getUserById, addUser }
 
 ## Client
 
-For the client side, both ESM and CJS are supported.
+For the client side, you can use Node.js (ESM or CJS) or browser (ESM or UMD).
+
+Using Node.js
 
 ::: code-group
 
 ```javascript [ESM]
 import client from '@neko/simple-rpc/client'
 
-client.host = 'http://localhost:8080'
+client.settings.host = 'http://localhost:8080'
 
 let user = await client.user.getById(1)
 console.log(user)
@@ -101,27 +101,33 @@ console.log(user)
 ```
 
 ```javascript [CJS]
-const client = require('@neko/simple-rpc/client')
+const { default: client } = require('@neko/simple-rpc/client')
 
-client.host = 'http://localhost:8080'
+client.settings.host = 'http://localhost:8080'
 
-let user = await client.user.getById(1)
-console.log(user)
+;(async () => {
+    let user = await client.user.getById(1)
+    console.log(user)
 
-user = await client.user.add({ id: 2, name: 'Jane' })
-console.log(user)
+    user = await client.user.add({ id: 2, name: 'Jane' })
+    console.log(user)
+})()
+
 ```
 
 :::
 
-Or you can use UMD to access the global variable `simpleRpcClient`:
+For using UMD in browser, access the global variable `simpleRpcClient`:
 
 ```html
 <script src="node_modules/@neko/simple-rpc/dist/client-umd.js"></script>
 ```
 
 ```javascript
-simpleRpcClient.host = 'http://localhost:8080'
-const user = await simpleRpcClient.user.getById(1)
+const client = simpleRpcClient.default
+
+const user = await client.user.getById(1)
 console.log(user)
 ```
+
+To explore more features, please refer to the next sections to know about the [APIs](create-server) of the RPC framework.

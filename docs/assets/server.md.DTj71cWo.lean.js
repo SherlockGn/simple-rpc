@@ -1,1 +1,0 @@
-import{_ as s,c as i,o as e,a1 as a}from"./chunks/framework.Cr7mZrIm.js";const g=JSON.parse('{"title":"Server","description":"","frontmatter":{},"headers":[],"relativePath":"server.md","filePath":"server.md"}'),t={name:"server.md"},n=a("",31),r=[n];function h(l,p,k,o,d,c){return e(),i("div",null,r)}const u=s(t,[["render",h]]);export{g as __pageData,u as default};

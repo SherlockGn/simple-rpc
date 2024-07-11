@@ -27,10 +27,22 @@ export default defineConfig({
             {
                 text: 'API Reference',
                 items: [
-                    { text: 'createServer', link: '/create-server' },
+                    { text: 'Create Server', link: '/create-server' },
                     { text: 'Server', link: '/server' },
+                    { text: 'RPC Context', link: '/rpc-context' },
                     { text: 'Client', link: '/client' },
-                    { text: 'RPC', link: '/rpc'}
+                    { text: 'RPC', link: '/rpc' },
+                    { text: 'Files', link: '/files' }
+                ]
+            },
+            {
+                text: 'Implementation',
+                items: [
+                    { text: 'Serialization', link: '/serialization' },
+                    {
+                        text: 'Client Implementation',
+                        link: '/client-implementation'
+                    }
                 ]
             }
         ],

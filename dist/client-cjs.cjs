@@ -500,7 +500,7 @@ class HttpRequestClient {
         }
         let request;
         if (typeof require === 'function') {
-            request = require('request').request;
+            request = require(protocol).request;
         } else {
             request = (await import(protocol)).request;
         }
@@ -618,6 +618,9 @@ const invoke = async (module, method, params) => {
             return deserialize(responseText)
         }
     } catch (e) {
+        if (e instanceof Error) {
+            throw e
+        }
         throw deserialize(e)
     }
 };
@@ -630,7 +633,7 @@ const settings = {
     download: null
 };
 
-const file = async (path) => {
+const file = async path => {
     if (typeof window !== 'undefined') {
         throw Error('Not supported in browser')
     }
@@ -681,7 +684,7 @@ const urlHandler = {
 
 const url = new Proxy({ chain: [] }, urlHandler);
 
-const clientHander = {
+const clientHandler = {
     get: (target, prop) => {
         if (prop === 'settings') {
             return settings
@@ -690,7 +693,7 @@ const clientHander = {
             return url
         }
         const newChain = [...target.chain, prop];
-        return new Proxy(factory(newChain), clientHander)
+        return new Proxy(factory(newChain), clientHandler)
     },
     apply: async (target, _this, params) => {
         if (target.chain.length < 2) {
@@ -703,7 +706,7 @@ const clientHander = {
     }
 };
 
-const client = new Proxy({ settings, chain: [] }, clientHander);
+const client = new Proxy({ settings, chain: [] }, clientHandler);
 
 exports.default = client;
 exports.file = file;

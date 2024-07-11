@@ -146,7 +146,7 @@ class HttpRequestClient {
         }
         let request
         if (typeof require === 'function') {
-            request = require('request').request
+            request = require(protocol).request
         } else {
             request = (await import(protocol)).request
         }

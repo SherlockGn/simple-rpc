@@ -7,11 +7,12 @@ import * as rpc from './rpc.mjs'
 import * as st from './static.mjs'
 import { response } from './rsp.mjs'
 import FileRsp from './FileRsp.mjs'
+import { serialize, deserialize } from './serialize.mjs'
 
 export { FileRsp }
+export { serialize, deserialize }
 
 const handler = async (req, res) => {
-
     const ctx = {
         state: {}
     }
