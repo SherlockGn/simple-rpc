@@ -5,7 +5,7 @@
 To install Simple RPC, simply run the following command in your server project folder or client project folder:
 
 ```shell
-npm install @neko/simple-rpc
+npm install @neko-gong/simple-rpc
 ```
 
 ## Server
@@ -29,7 +29,7 @@ In the file `server.js`, you can use the following code to create a server:
 ::: code-group
 
 ```javascript [ESM]
-import { createServer } from '@neko/simple-rpc'
+import { createServer } from '@neko-gong/simple-rpc'
 
 const server = createServer()
 server.useRpc('./rpc')
@@ -38,7 +38,7 @@ await server.start()
 ```
 
 ```javascript [CJS]
-const { createServer } = require('@neko/simple-rpc')
+const { createServer } = require('@neko-gong/simple-rpc')
 
 ;(async () => {
     const server = createServer()
@@ -89,7 +89,7 @@ Using Node.js
 ::: code-group
 
 ```javascript [ESM]
-import client from '@neko/simple-rpc/client'
+import client from '@neko-gong/simple-rpc/client'
 
 client.settings.host = 'http://localhost:8080'
 
@@ -101,7 +101,7 @@ console.log(user)
 ```
 
 ```javascript [CJS]
-const { default: client } = require('@neko/simple-rpc/client')
+const { default: client } = require('@neko-gong/simple-rpc/client')
 
 client.settings.host = 'http://localhost:8080'
 
@@ -120,7 +120,7 @@ client.settings.host = 'http://localhost:8080'
 For using UMD in browser, access the global variable `simpleRpcClient`:
 
 ```html
-<script src="node_modules/@neko/simple-rpc/dist/client-umd.js"></script>
+<script src="node_modules/@neko-gong/simple-rpc/dist/client-umd.js"></script>
 ```
 
 ```javascript

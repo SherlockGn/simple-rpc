@@ -5,7 +5,7 @@ Use the exported `createServer` function to create a new server instance.
 Example:
 
 ```javascript
-import { createServer } from '@neko/simple-rpc'
+import { createServer } from '@neko-gong/simple-rpc'
 import fs from 'fs'
 
 const server = createServer({ // [!code highlight]

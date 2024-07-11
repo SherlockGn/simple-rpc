@@ -1,6 +1,6 @@
 # Files
 
-One of the most powerful features of `@neko/simple-rpc` is the ability to upload and download files.
+One of the most powerful features of `@neko-gong/simple-rpc` is the ability to upload and download files.
 
 To download or upload files, you need to make file as a function parameter or return value.
 
@@ -23,7 +23,7 @@ For server:
 
 ```javascript [ESM]
 // file.js
-import { FileRsp } from '@neko/simple-rpc'
+import { FileRsp } from '@neko-gong/simple-rpc'
 
 export const getImage = () => {
     return FileRsp('path-to-the-image')
@@ -32,7 +32,7 @@ export const getImage = () => {
 
 ```javascript [CJS]
 // file.js
-const { FileRsp } = require('@neko/simple-rpc')
+const { FileRsp } = require('@neko-gong/simple-rpc')
 
 const getImage = () => {
     return FileRsp('path-to-the-image')
@@ -49,7 +49,7 @@ Or you can use `Buffer` to initialize `FileRsp`. This would be helpful if the fi
 
 ```javascript [ESM]
 // file.js
-import { FileRsp } from '@neko/simple-rpc'
+import { FileRsp } from '@neko-gong/simple-rpc'
 import fs from 'fs'
 
 export const getImage = () => {
@@ -60,7 +60,7 @@ export const getImage = () => {
 
 ```javascript [CJS]
 // file.js
-const { FileRsp } = require('@neko/simple-rpc')
+const { FileRsp } = require('@neko-gong/simple-rpc')
 const fs = require('fs')
 
 const getImage = () => {
@@ -80,7 +80,7 @@ For client, if you're using browser, simply use `client.url` to generate the ima
 ```
 
 ```javascript
-import client from '@neko/simple-rpc/client'
+import client from '@neko-gong/simple-rpc/client'
 
 const img = document.getElementById('my-img')
 img.src = client.url.file.getImage()
@@ -92,7 +92,7 @@ If you're using Node.js, simply download the file using the URL as well.
 
 ```javascript [ESM, fetch]
 import fs from 'fs'
-import client from '@neko/simple-rpc/client'
+import client from '@neko-gong/simple-rpc/client'
 
 const res = await fetch(client.url.file.getImage())
 const buf = Buffer.from(await res.arrayBuffer())
@@ -101,7 +101,7 @@ await fs.writeFile('./img.png', buf)
 
 ```javascript [CJS, fetch]
 const fs = require('fs')
-const { default: client } = require('@neko/simple-rpc/client')
+const { default: client } = require('@neko-gong/simple-rpc/client')
 
 ;(async () => {
     const res = await fetch(client.url.file.getImage())
@@ -136,14 +136,14 @@ If you're using Node.js, use exported `file` object to generate a Blob instance.
 ::: code-group
 
 ```javascript [ESM]
-import client from '@neko/simple-rpc/client'
-import { file } from '@neko/simple-rpc/client'
+import client from '@neko-gong/simple-rpc/client'
+import { file } from '@neko-gong/simple-rpc/client'
 
 await client.file.upload(await file('path-to-the-file'))
 ```
 
 ```javascript [CJS]
-const { default: client, file } = require('@neko/simple-rpc/client')
+const { default: client, file } = require('@neko-gong/simple-rpc/client')
 
 ;(async () => {
     await client.file.upload(await file('path-to-the-file'))

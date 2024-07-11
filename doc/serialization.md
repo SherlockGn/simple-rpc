@@ -5,7 +5,7 @@ You might be curious about why the Simple RPC framework supports so many types w
 The reason is that a powerful serialization algorithm is used. You can experience the power of it by using the `serialize` and `deserialize` functions exported from  the package.
 
 ```javascript
-import { serialize } from '@neko/simple-rpc'
+import { serialize } from '@neko-gong/simple-rpc'
 
 const qux = {
     f: {
